@@ -350,7 +350,7 @@ task mutect {
             -L ~{interval_list} \
             -I ~{tumor_bam} \
             --read-index ~{tumor_bam_bai} \
-            --f1r2-tar-gz mutect.f1r2.tar.gz # ~{"--germline-resource " + gnomad}  #! problem with compute1
+            --f1r2-tar-gz mutect.f1r2.tar.gz ~{"--germline-resource " + gnomad}  #! problem with compute1
 
         /gatk/gatk LearnReadOrientationModel \
             -I mutect.f1r2.tar.gz \
