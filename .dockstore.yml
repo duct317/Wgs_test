@@ -1,0 +1,10 @@
+version: 1.2
+workflows:
+  - subclass: WDL
+    primaryDescriptorPath: variant_calling.wdl
+    testParameterFiles:
+    - vc.json
+    authors:
+      - name: "Duc Tran"
+        email: tran.n@wustl.edu
+    name: WGS-Test-Duc
