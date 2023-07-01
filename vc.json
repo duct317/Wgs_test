@@ -1,0 +1,15 @@
+{
+  "variant_calling.aligned_bam_file": "/storage1/fs1/bolton/Active/Users/IrenaeusChan/WGS_TEST/H_VL-MI-00312-FR04507661.cram",
+  "variant_calling.aligned_bai_file": "/storage1/fs1/bolton/Active/Users/IrenaeusChan/WGS_TEST/WGS.tsv",
+  "variant_calling.tumor_sample_name": "H_VL-MI-00052-AB43684226",
+  "variant_calling.target_intervals": "/storage1/fs1/bolton/Active/Users/IrenaeusChan/WGS_TEST/hg38_DH.wgs.chrom_only.interval_list",
+  "variant_calling.normalized_gnomad_exclude": "/storage1/fs1/bolton/Active/Protected/Data/hg38/vcf/gnomad.AF.exclude.0.005.norm.vcf.gz",
+  "variant_calling.normalized_gnomad_exclude_tbi": "/storage1/fs1/bolton/Active/Protected/Data/hg38/vcf/gnomad.AF.exclude.0.005.norm.vcf.gz.tbi",
+  "variant_calling.mutect_pon2_file": "/storage1/fs1/bolton/Active/Projects/AnVIL/HiSeq_PoN2/mutect.2N.maxVAF.vcf.gz",
+  "variant_calling.mutect_pon2_file_tbi": "/storage1/fs1/bolton/Active/Projects/AnVIL/HiSeq_PoN2/mutect.2N.maxVAF.vcf.gz.tbi",
+  "variant_calling.vardict_pon2_file": "/storage1/fs1/bolton/Active/Projects/AnVIL/HiSeq_PoN2/vardict.2N.maxVAF.vcf.gz",
+  "variant_calling.vardict_pon2_file_tbi": "/storage1/fs1/bolton/Active/Projects/AnVIL/HiSeq_PoN2/vardict.2N.maxVAF.vcf.gz.tbi",
+  "variant_calling.reference": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.fa",
+  "variant_calling.reference_fai": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.fa.fai",
+  "variant_calling.reference_dict": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.dict"
+}
