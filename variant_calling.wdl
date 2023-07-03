@@ -350,7 +350,7 @@ task mutect {
             -L ~{interval_list} \
             -I ~{tumor_bam} \
             --read-index ~{tumor_bam_bai} \
-            --f1r2-tar-gz mutect.f1r2.tar.gz ~{"--germline-resource " + gnomad}  #! problem with compute1
+            --f1r2-tar-gz mutect.f1r2.tar.gz #~{"--germline-resource " + gnomad}  #! problem with compute1
 
         /gatk/gatk LearnReadOrientationModel \
             -I mutect.f1r2.tar.gz \
@@ -529,14 +529,17 @@ task vardict {
         bedtools makewindows -b ~{interval_bed} -w 1150 -s 1000 > ~{basename(interval_bed, ".bed")}_windows.bed
         bedtools intersect -u -wa -a ~{basename(interval_bed, ".bed")}_windows.bed -b ~{mutect_vcf} > interval_list_mutect.bed
 
-        # Merge small intervals and then make windows
+        # Merge small intervals
         bedtools merge -i interval_list_mutect.bed > interval_list_mutect_merged.bed
-        bedtools makewindows -b interval_list_mutect_merged.bed -w 20150 -s 20000 > interval_list_mutect_merged_windows.bed
-
         # intersect with bed file
         samtools index ~{tumor_bam}
-        samtools view -u -b -M -L interval_list_mutect_merged_windows.bed -T ~{reference} -o intersected.bam ~{tumor_bam}
+        samtools view -u -b -M -L interval_list_mutect_merged.bed -T ~{reference} -o intersected.bam ~{tumor_bam}
         samtools index intersected.bam
+
+        # Make windows
+        bedtools makewindows -b interval_list_mutect_merged.bed -w 20150 -s 20000 > interval_list_mutect_merged_windows.bed
+
+        
 
         # Split bed file into 16 equal parts
         split -d --additional-suffix .bed -n l/16 interval_list_mutect_merged_windows.bed splitBed.
