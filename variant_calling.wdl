@@ -167,8 +167,8 @@ task intervalsToBed {
         docker: "ubuntu:bionic"
         memory: cores * memory + "GB"
         cpu: cores
-        disks: "local-disk ~{space_needed_gb} SSD"
-        bootDiskSizeGb: space_needed_gb
+        disks: "local-disk ~{space_needed_gb} HDD"
+        bootDiskSizeGb: 10
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -196,7 +196,7 @@ task splitBedToChr {
     }
 
     Float data_size = size(interval_bed, "GB")
-    Int space_needed_gb = ceil(10 + 2 * data_size)
+    Int space_needed_gb = ceil(10 + data_size)
     Int memory = 1
     Int cores = 1
     Int preemptible = 1
@@ -206,8 +206,8 @@ task splitBedToChr {
         cpu: cores
         memory: cores * memory + "GB"
         docker: "kboltonlab/bst:latest"
-        bootDiskSizeGb: space_needed_gb
-        disks: "local-disk ~{space_needed_gb} SSD"
+        bootDiskSizeGb: 10
+        disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -246,7 +246,7 @@ task subsetBam {
         memory: cores * memory + "GB"
         docker: "kboltonlab/bst:latest"
         bootDiskSizeGb: space_needed_gb
-        disks: "local-disk ~{space_needed_gb} SSD"
+        disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -276,18 +276,18 @@ task bamIndex {
     }
 
     Float data_size = size([bam_file], "GB")
-    Int space_needed_gb = ceil(6 * data_size)
+    Int space_needed_gb = ceil(10 + data_size)
     Int memory = 4
     Int cores = 1
-    Int preemptible = 2
-    Int maxRetries = 2
+    Int preemptible = 1
+    Int maxRetries = 0
 
     runtime {
         cpu: cores
         memory: cores * memory + "GB"
         docker: "kboltonlab/bst:latest"
-        bootDiskSizeGb: space_needed_gb
-        disks: "local-disk ~{space_needed_gb} SSD"
+        bootDiskSizeGb: 10
+        disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -322,7 +322,7 @@ task mutect {
 
     Float reference_size = size([reference, reference_fai, reference_dict, interval_list], "GB")
     Float data_size = size([tumor_bam, tumor_bam_bai], "GB")
-    Int space_needed_gb = ceil(10 + 2 * data_size + reference_size)
+    Int space_needed_gb = ceil(10 + data_size + reference_size)
     Int memory = select_first([mem_limit_override, 4])
     Int cores = select_first([cpu_override, 1])
     Int preemptible = 3
@@ -332,8 +332,8 @@ task mutect {
         cpu: cores
         docker: "broadinstitute/gatk:4.2.0.0"
         memory: cores * memory + "GB"
-        bootDiskSizeGb: space_needed_gb
-        disks: "local-disk ~{space_needed_gb} SSD"
+        bootDiskSizeGb: 12
+        disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -394,14 +394,15 @@ task sanitizeNormalizeFilter {
     Int maxRetries = 0
     Float data_size = size([vcf, vcf_tbi, exclude_vcf, exclude_vcf_tbi, vcf2PON, vcf2PON_tbi], "GB")
     Float reference_size = size([reference, reference_fai], "GB")
-    Int space_needed_gb = ceil(10 + 2 * data_size + reference_size)
+    Int space_needed_gb = ceil(10 + data_size + reference_size)
     Int memory = 1
     Int cores = 1
 
     runtime {
         memory: cores * memory + "GB"
         docker: "kboltonlab/bst"
-        disks: "local-disk ~{space_needed_gb} SSD"
+        disks: "local-disk ~{space_needed_gb} HDD"
+        bootDiskSizeGb: 10
         cpu: cores
         preemptible: preemptible
         maxRetries: maxRetries
@@ -455,7 +456,7 @@ task mutect_pass {
 
     Float data_size = size([mutect_vcf, mutect_vcf_tbi], "GB")
     Int space_needed_gb = ceil(10 + data_size)
-    Int memory = 6
+    Int memory = 2
     Int cores = 1
     Int preemptible = 1
     Int maxRetries = 0
@@ -464,8 +465,8 @@ task mutect_pass {
         cpu: cores
         docker: "staphb/bcftools:latest"
         memory: cores * memory + "GB"
-        disks: "local-disk ~{space_needed_gb} SSD"
-        bootDiskSizeGb: space_needed_gb
+        disks: "local-disk ~{space_needed_gb} HDD"
+        bootDiskSizeGb: 10
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -498,7 +499,7 @@ task vardict {
 
     Float reference_size = size([reference, reference_fai, interval_bed], "GB")
     Float data_size = size([tumor_bam, tumor_bam_bai, mutect_vcf], "GB")
-    Int space_needed_gb = ceil(10 + 4 * data_size + reference_size)
+    Int space_needed_gb = ceil(10 + 3 * data_size + reference_size)
     Int preemptible = 3
     Int maxRetries = 3
     Int memory = select_first([mem_limit_override, 2])
@@ -508,8 +509,8 @@ task vardict {
         docker: "kboltonlab/vardictjava:bedtools"
         memory: cores * memory + "GB"
         cpu: cores
-        bootDiskSizeGb: space_needed_gb
-        disks: "local-disk ~{space_needed_gb} SSD"
+        bootDiskSizeGb: 12
+        disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -537,7 +538,7 @@ task vardict {
         samtools index intersected.bam
 
         # Make windows
-        bedtools makewindows -b interval_list_mutect_merged.bed -w 20150 -s 20000 > interval_list_mutect_merged_windows.bed
+        bedtools makewindows -b interval_list_mutect_merged.bed -w 10150 -s 10000 > interval_list_mutect_merged_windows.bed
 
         
 
@@ -562,11 +563,11 @@ task vardict {
             /opt/VarDictJava/build/install/VarDict/bin/VarDict \
                 -U -G ~{reference} \
                 -X 1 \
+                -t \
                 -f ~{min_var_freq} \
                 -N ~{tumor_sample_name} \
                 -b intersected.bam \
                 -c 1 -S 2 -E 3 -g 4 ${fName} \
-                -th ~{cores} \
                 --deldupvar -Q 10 -F 0x700 --fisher > result.${part}.txt &
         done;
         # Wait for all running jobs to finish
@@ -608,7 +609,8 @@ task mergeVcf {
     runtime {
         docker: "kboltonlab/bst:latest"
         memory: cores * memory + "GB"
-        disks: "local-disk ~{space_needed_gb} SSD"
+        disks: "local-disk ~{space_needed_gb} HDD"
+        bootDiskSizeGb: 10
         cpu: cores
         preemptible: preemptible
         maxRetries: maxRetries
