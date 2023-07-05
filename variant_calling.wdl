@@ -260,7 +260,7 @@ task subsetBam {
         samtools index ~{bam_link}
 
         # Keep 5% of read for testing
-        samtools view -@ ~{cores} -s 0.05 --fast --cram -T ~{reference} -o ~{sample_name}_subset.cram ~{bam_link}
+        samtools view -@ ~{cores} -s 0.05 --fast --cram -T ~{reference} -t ~{reference_fai} -o ~{sample_name}_subset.cram ~{bam_link}
         samtools index ~{sample_name}_subset.cram
     >>>
 
@@ -287,7 +287,7 @@ task bamIndex {
         memory: cores * memory + "GB"
         docker: "kboltonlab/bst:latest"
         bootDiskSizeGb: 10
-        disks: "local-disk ~{space_needed_gb} HDD"
+        disks: "local-disk ~{space_needed_gb} SSD"
         preemptible: preemptible
         maxRetries: maxRetries
     }
@@ -332,7 +332,7 @@ task mutect {
         cpu: cores
         docker: "broadinstitute/gatk:4.2.0.0"
         memory: cores * memory + "GB"
-        bootDiskSizeGb: 12
+        bootDiskSizeGb: 10
         disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
@@ -474,7 +474,7 @@ task mutect_pass {
     command <<<
         bcftools filter -i 'FILTER="PASS" || FILTER="weak_evidence" || FILTER="strand_bias" || FILTER="weak_evidence;strand_bias"' ~{mutect_vcf} > mutect_passed.vcf
         bcftools view -r 'chr20:32434638' --no-header ~{mutect_vcf} >> mutect_passed.vcf
-        bcftools sort -m ~{memory}G mutect_passed.vcf -Oz -o mutect_passed.sorted.vcf.gz #! add unit to -m flag
+        bcftools sort -m ~{memory}G mutect_passed.vcf -Oz -o mutect_passed.sorted.vcf.gz 
     >>>
 
     output {
@@ -499,7 +499,7 @@ task vardict {
 
     Float reference_size = size([reference, reference_fai, interval_bed], "GB")
     Float data_size = size([tumor_bam, tumor_bam_bai, mutect_vcf], "GB")
-    Int space_needed_gb = ceil(10 + 3 * data_size + reference_size)
+    Int space_needed_gb = ceil(10 + 2.5 * data_size + reference_size)
     Int preemptible = 3
     Int maxRetries = 3
     Int memory = select_first([mem_limit_override, 2])
@@ -509,7 +509,7 @@ task vardict {
         docker: "kboltonlab/vardictjava:bedtools"
         memory: cores * memory + "GB"
         cpu: cores
-        bootDiskSizeGb: 12
+        bootDiskSizeGb: 10
         disks: "local-disk ~{space_needed_gb} HDD"
         preemptible: preemptible
         maxRetries: maxRetries
@@ -527,20 +527,19 @@ task vardict {
 
         # TODO: Account for when Mutect File is "Empty"..
 
+        # Make windows and intersect with vcf file
         bedtools makewindows -b ~{interval_bed} -w 1150 -s 1000 > ~{basename(interval_bed, ".bed")}_windows.bed
         bedtools intersect -u -wa -a ~{basename(interval_bed, ".bed")}_windows.bed -b ~{mutect_vcf} > interval_list_mutect.bed
 
         # Merge small intervals
         bedtools merge -i interval_list_mutect.bed > interval_list_mutect_merged.bed
         # intersect with bed file
-        samtools index ~{tumor_bam}
-        samtools view -u -b -M -L interval_list_mutect_merged.bed -T ~{reference} -o intersected.bam ~{tumor_bam}
+        samtools view -u -b -M -L interval_list_mutect_merged.bed -T ~{reference} -t ~{reference_fai} \
+            -o intersected.bam -X ~{tumor_bam} ~{tumor_bam_bai}
         samtools index intersected.bam
 
         # Make windows
         bedtools makewindows -b interval_list_mutect_merged.bed -w 10150 -s 10000 > interval_list_mutect_merged_windows.bed
-
-        
 
         # Split bed file into 16 equal parts
         split -d --additional-suffix .bed -n l/16 interval_list_mutect_merged_windows.bed splitBed.
@@ -563,7 +562,6 @@ task vardict {
             /opt/VarDictJava/build/install/VarDict/bin/VarDict \
                 -U -G ~{reference} \
                 -X 1 \
-                -t \
                 -f ~{min_var_freq} \
                 -N ~{tumor_sample_name} \
                 -b intersected.bam \
