@@ -6,7 +6,6 @@ workflow variant_calling {
         File aligned_bai_file
         String tumor_sample_name
         File target_intervals               # Interval List
-        File exome_bed                      # Exome BED file
 
         # Reference
         File reference
@@ -49,20 +48,20 @@ workflow variant_calling {
     }
 
     #! For testing only
-    call subsetBam {
-        input:
-            bam_file = aligned_bam_file,
-            bai_file = aligned_bai_file,
-            sample_name = tumor_sample_name,
-            reference = reference,
-            reference_fai = reference_fai,
-            reference_dict = reference_dict
-    }
-
-    # call bamIndex {
+    # call subsetBam {
     #     input:
-    #         bam_file = aligned_bam_file
+    #         bam_file = aligned_bam_file,
+    #         bai_file = aligned_bai_file,
+    #         sample_name = tumor_sample_name,
+    #         reference = reference,
+    #         reference_fai = reference_fai,
+    #         reference_dict = reference_dict
     # }
+
+    call bamIndex {
+        input:
+            bam_file = aligned_bam_file
+    }
 
     scatter (bed_chr in splitBedToChr.split_chr) {
         # Mutect
@@ -73,10 +72,10 @@ workflow variant_calling {
             reference_dict = reference_dict,
             gnomad = normalized_gnomad_exclude,
             gnomad_tbi = normalized_gnomad_exclude_tbi,
-            # tumor_bam = aligned_bam_file, 
-            tumor_bam = subsetBam.subset_bam,
-            # tumor_bam_bai = bamIndex.bam_index, 
-            tumor_bam_bai = subsetBam.subset_bam_bai,
+            tumor_bam = aligned_bam_file, 
+            #tumor_bam = subsetBam.subset_bam,
+            tumor_bam_bai = bamIndex.bam_index, 
+            #tumor_bam_bai = subsetBam.subset_bam_bai,
             interval_list = bed_chr
         }
 
@@ -91,15 +90,14 @@ workflow variant_calling {
             input:
             reference = reference,
             reference_fai = reference_fai,
-            # tumor_bam = aligned_bam_file, 
-            tumor_bam = subsetBam.subset_bam,
-            # tumor_bam_bai = bamIndex.bam_index,
-            tumor_bam_bai = subsetBam.subset_bam_bai,
+            tumor_bam = aligned_bam_file, 
+            #tumor_bam = subsetBam.subset_bam,
+            tumor_bam_bai = bamIndex.bam_index,
+            #tumor_bam_bai = subsetBam.subset_bam_bai,
             interval_bed = bed_chr,
             min_var_freq = af_threshold,
             tumor_sample_name = tumor_sample_name,
-            mutect_vcf = mutect_pass.vcf,
-            exome_bed = exome_bed
+            mutect_vcf = mutect_pass.vcf
         }
     }
 
@@ -352,7 +350,7 @@ task mutect {
             -L ~{interval_list} \
             -I ~{tumor_bam} \
             --read-index ~{tumor_bam_bai} \
-            --f1r2-tar-gz mutect.f1r2.tar.gz #~{"--germline-resource " + gnomad}  #! problem with compute1
+            --f1r2-tar-gz mutect.f1r2.tar.gz ~{"--germline-resource " + gnomad}  #! problem with compute1
 
         /gatk/gatk LearnReadOrientationModel \
             -I mutect.f1r2.tar.gz \
@@ -497,7 +495,6 @@ task vardict {
         Int JavaXmx = 24
         Int? mem_limit_override
         Int? cpu_override
-        File exome_bed
     }
 
     Float reference_size = size([reference, reference_fai, interval_bed], "GB")
@@ -532,8 +529,7 @@ task vardict {
 
         # Make windows and intersect with vcf file
         bedtools makewindows -b ~{interval_bed} -w 1150 -s 1000 > ~{basename(interval_bed, ".bed")}_windows.bed
-        bedtools intersect -u -wa -a ~{basename(interval_bed, ".bed")}_windows.bed -b ~{exome_bed} > interval_list_exome.bed
-        bedtools intersect -u -wa -a interval_list_exome.bed -b ~{mutect_vcf} > interval_list_mutect.bed
+        bedtools intersect -u -wa -a ~{basename(interval_bed, ".bed")}_windows.bed -b ~{mutect_vcf} > interval_list_mutect.bed
 
         # Merge small intervals
         bedtools merge -i interval_list_mutect.bed > interval_list_mutect_merged.bed

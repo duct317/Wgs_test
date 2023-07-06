@@ -11,6 +11,5 @@
   "variant_calling.vardict_pon2_file_tbi": "/storage1/fs1/bolton/Active/Projects/AnVIL/HiSeq_PoN2/vardict.2N.maxVAF.vcf.gz.tbi",
   "variant_calling.reference": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.fa",
   "variant_calling.reference_fai": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.fa.fai",
-  "variant_calling.reference_dict": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.dict",
-  "variant_calling.exome_bed": "/storage1/fs1/bolton/Active/Users/DucTran/Wgs/Wdl/exome_hg38.bed"
+  "variant_calling.reference_dict": "/storage1/fs1/bga/Active/gmsroot/gc2560/core/model_data/2887491634/build50f99e75d14340ffb5b7d21b03887637/all_sequences.dict"
 }
